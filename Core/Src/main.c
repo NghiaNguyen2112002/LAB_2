@@ -61,13 +61,22 @@ void UpdateClockBuffer();
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+uint8_t TIME_CYCLE = 10;
+
 uint8_t	timer0_counter = 0;
 uint8_t	timer0_flag = 0;
-uint8_t TIME_CYCLE = 10;
+
+uint8_t	timer1_counter = 0;
+uint8_t	timer1_flag = 0;
 
 void SetTimer0(uint16_t duration){
 	timer0_counter = duration / TIME_CYCLE;
 	timer0_flag = 0;
+}
+
+void SetTimer1(uint16_t duration){
+	timer1_counter = duration / TIME_CYCLE;
+	timer1_flag = 0;
 }
 
 void RunTimer0(){
@@ -75,6 +84,15 @@ void RunTimer0(){
 		timer0_counter--;
 		if(timer0_counter <= 0){
 			timer0_flag = 1;
+		}
+	}
+}
+
+void RunTimer1(){
+	if(timer1_counter > 0){
+		timer1_counter--;
+		if(timer1_counter <= 0){
+			timer1_flag = 1;
 		}
 	}
 }
@@ -114,13 +132,18 @@ int main(void)
 
   hour = 15; minute = 8; second = 50;
 
+  uint8_t indexLed			= 0;
+
   SetTimer0(1000);
+  SetTimer1(250);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  UpdateClockBuffer();
+
 	  if(timer0_flag == 1){
 		  SetTimer0(1000);
 
@@ -136,9 +159,15 @@ int main(void)
 		  if(hour > 24){
 			  hour = 0;
 		  }
-		  UpdateClockBuffer();
 
 		  HAL_GPIO_TogglePin(DOT_GPIO_Port, DOT_Pin);
+	  }
+
+	  if(timer1_flag == 1){
+		  SetTimer1(250);
+		  if(indexLed > 3) indexLed = 0;
+
+		  UpdateLed7Seg(indexLed++);
 	  }
     /* USER CODE END WHILE */
 
@@ -276,15 +305,8 @@ static uint32_t led7Seg[10] = { 0x003F0040, 0x00060079, 0x005B0024,
   								0x006F0010 };  //GPIOB
 static uint32_t led7SegEnable[4] = {0x002001C0, 0x004001A0, 0x00800160,
 								0x010000E0};    //GPIOA
-uint8_t	timeSwitch 			= 250/10;
-uint8_t	counterSwitch		= 0;
-uint8_t isLed0 				= 1;
 
-uint8_t timeBlinking		= 1000/10;
-uint8_t counterBlinking		= 0;
-
-uint8_t indexLed			= 0;
-uint8_t ledBuffer[4]		= {1, 5, 4, 0};
+uint8_t ledBuffer[4]		= {0, 0, 0, 0};
 void Display7Seg(uint8_t num){
 	if(num >= 0 && num <= 9){
 		GPIOB->BSRR = led7Seg[num];
@@ -313,16 +335,7 @@ void UpdateClockBuffer(){
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if(htim->Instance == TIM2){
 		RunTimer0();
-
-		counterSwitch--;
-		if(counterSwitch <= 0){
-			counterSwitch = timeSwitch;
-
-			if(indexLed > 3) indexLed = 0;
-
-			UpdateLed7Seg(indexLed++);
-			counterSwitch = timeSwitch;
-		}
+		RunTimer1();
 	}
 }
 
