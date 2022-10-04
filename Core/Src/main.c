@@ -61,7 +61,23 @@ void UpdateClockBuffer();
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+uint8_t	timer0_counter = 0;
+uint8_t	timer0_flag = 0;
+uint8_t TIME_CYCLE = 10;
 
+void SetTimer0(uint16_t duration){
+	timer0_counter = duration / TIME_CYCLE;
+	timer0_flag = 0;
+}
+
+void RunTimer0(){
+	if(timer0_counter > 0){
+		timer0_counter--;
+		if(timer0_counter <= 0){
+			timer0_flag = 1;
+		}
+	}
+}
 /* USER CODE END 0 */
 
 /**
@@ -96,29 +112,18 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2);
 
-  hour = 15; minute = 8; second = 50;
+//  hour = 15; minute = 8; second = 50;
+  SetTimer0(1000);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//	  second++;
-//	  if(second >= 60){
-//		  second = 0;
-//		  minute++;
-//	  }
-	  minute++;
-	  if(minute >= 60){
-		  minute = 0;
-		  hour++;
+	  if(timer0_flag == 1){
+		  HAL_GPIO_TogglePin(led_GPIO_Port, led_Pin);
+		  SetTimer0(2000);
 	  }
-	  if(hour >= 24){
-		  hour = 0;
-	  }
-
-	  UpdateClockBuffer();
-	  HAL_Delay(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -291,19 +296,7 @@ void UpdateClockBuffer(){
 }
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if(htim->Instance == TIM2){
-		counterBlinking--;
-		if(counterBlinking <= 0){
-			counterBlinking = timeBlinking;
-			HAL_GPIO_TogglePin(GPIOA, DOT_Pin);
-		}
-
-		counterSwitch--;
-		if(counterSwitch <= 0){
-			counterSwitch = timeSwitch;
-
-			if(indexLed >= 4) indexLed = 0;
-			UpdateLed7Seg(indexLed++);
-		}
+		RunTimer0();
 	}
 }
 
