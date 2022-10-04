@@ -429,7 +429,7 @@ static void MX_GPIO_Init(void)
  8000320:	40010c00 	.word	0x40010c00
 
 08000324 <Display7Seg>:
-uint8_t timeBlinking		= 2000/10;
+uint8_t timeBlinking		= 1000/10;
 uint8_t counterBlinking		= 0;
 
 uint8_t indexLed			= 0;

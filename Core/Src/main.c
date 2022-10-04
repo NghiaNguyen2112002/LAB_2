@@ -231,11 +231,11 @@ static uint32_t led7Seg[10] = { 0x003F0040, 0x00060079, 0x005B0024,
   								0x006F0010 };  //GPIOB
 static uint32_t led7SegEnable[4] = {0x002001C0, 0x004001A0, 0x00800160,
 								0x010000E0};    //GPIOA
-uint8_t	timeSwitch 			= 500/10;
+uint8_t	timeSwitch 			= 250/10;
 uint8_t	counterSwitch		= 0;
 uint8_t isLed0 				= 1;
 
-uint8_t timeBlinking		= 2000/10;
+uint8_t timeBlinking		= 1000/10;
 uint8_t counterBlinking		= 0;
 
 uint8_t indexLed			= 0;
