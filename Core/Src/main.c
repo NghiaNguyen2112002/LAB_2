@@ -112,7 +112,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2);
 
-//  hour = 15; minute = 8; second = 50;
+  hour = 15; minute = 8; second = 50;
+
   SetTimer0(1000);
   /* USER CODE END 2 */
 
@@ -121,8 +122,23 @@ int main(void)
   while (1)
   {
 	  if(timer0_flag == 1){
-		  HAL_GPIO_TogglePin(led_GPIO_Port, led_Pin);
-		  SetTimer0(2000);
+		  SetTimer0(1000);
+
+		  minute++;
+//		  if(second >= 60){
+//			  second = 0;
+//			  minute++;
+//		  }
+		  if(minute >= 60){
+			  minute = 0;
+			  hour++;
+		  }
+		  if(hour > 24){
+			  hour = 0;
+		  }
+		  UpdateClockBuffer();
+
+		  HAL_GPIO_TogglePin(DOT_GPIO_Port, DOT_Pin);
 	  }
     /* USER CODE END WHILE */
 
@@ -297,6 +313,16 @@ void UpdateClockBuffer(){
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if(htim->Instance == TIM2){
 		RunTimer0();
+
+		counterSwitch--;
+		if(counterSwitch <= 0){
+			counterSwitch = timeSwitch;
+
+			if(indexLed > 3) indexLed = 0;
+
+			UpdateLed7Seg(indexLed++);
+			counterSwitch = timeSwitch;
+		}
 	}
 }
 
