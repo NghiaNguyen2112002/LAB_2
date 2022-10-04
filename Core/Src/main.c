@@ -198,25 +198,20 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, DOT_Pin|led_Pin|en0_Pin|en1_Pin
-                          |en3_Pin, GPIO_PIN_RESET);
+                          |en2_Pin|en3_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, seg0_Pin|seg1_Pin|seg2_Pin|seg3_Pin
                           |seg4_Pin|seg5_Pin|seg6_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : DOT_Pin led_Pin en0_Pin en1_Pin
-                           en3_Pin */
+                           en2_Pin en3_Pin */
   GPIO_InitStruct.Pin = DOT_Pin|led_Pin|en0_Pin|en1_Pin
-                          |en3_Pin;
+                          |en2_Pin|en3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : en2_Pin */
-  GPIO_InitStruct.Pin = en2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  HAL_GPIO_Init(en2_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : seg0_Pin seg1_Pin seg2_Pin seg3_Pin
                            seg4_Pin seg5_Pin seg6_Pin */
@@ -235,28 +230,62 @@ static uint32_t led7Seg[10] = { 0x003F0040, 0x00060079, 0x005B0024,
   								0x007D0002, 0x00070078, 0x007F0000,
   								0x006F0010 };  //GPIOB
 static uint32_t led7SegEnable[4] = {0x002001C0, 0x004001A0, 0x00800160,
-								0x01000E00};    //GPIA
-uint8_t	timeSwitch 			= 50;
-uint8_t	counter				= 0;
+								0x01000E00};    //GPIOA
+uint8_t	timeSwitch 			= 500/10;
+uint8_t	counterSwitch		= 0;
 uint8_t isLed0 				= 1;
+
+uint8_t timeBlinking		= 2000/10;
+uint8_t counterBlinking		= 0;
+
+uint8_t indexLed			= 0;
+void Display7Seg(uint8_t num){
+	if(num >= 0 && num <= 9){
+		GPIOB->BSRR = led7Seg[num];
+	}
+}
+
+void Enable7Seg(int index){
+	if(index >= 0 && index <= 3){
+		GPIOA->BSRR = led7SegEnable[index];
+	}
+}
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if(htim->Instance == TIM2){
-		counter--;
-		if(counter <= 0){
-			counter = timeSwitch;
+		counterBlinking--;
+		if(counterBlinking <= 0){
+			counterBlinking = timeBlinking;
+			HAL_GPIO_TogglePin(GPIOA, DOT_Pin);
+		}
 
-			if(isLed0 == 1){
-				GPIOA->BSRR = led7SegEnable[0];
-				GPIOB->BSRR = led7Seg[1];
-				isLed0 = 0;
-			}
-			else if(isLed0 == 0){
-				GPIOA->BSRR = led7SegEnable[1];
-				GPIOB->BSRR = led7Seg[2];
-				isLed0 = 1;
+		counterSwitch--;
+		if(counterSwitch <= 0){
+			counterSwitch = timeSwitch;
+
+			Enable7Seg(indexLed);
+			switch(indexLed){
+			case 0:
+				Display7Seg(1);
+				indexLed = 1;
+				break;
+			case 1:
+				Display7Seg(2);
+				indexLed = 2;
+				break;
+			case 2:
+				Display7Seg(3);
+				indexLed = 3;
+				break;
+			case 3:
+				Display7Seg(0);
+				indexLed = 0;
+				break;
+			default:
+				break;
 			}
 		}
+
 	}
 }
 
