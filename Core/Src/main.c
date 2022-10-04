@@ -42,7 +42,7 @@
 TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
-
+uint8_t hour, minute, second;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -50,7 +50,13 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
+void Display7Seg(uint8_t num);
 
+void Enable7Seg(uint8_t index);
+
+void UpdateLed7Seg(uint8_t index);
+
+void UpdateClockBuffer();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -89,12 +95,30 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2);
+
+  hour = 15; minute = 8; second = 50;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+//	  second++;
+//	  if(second >= 60){
+//		  second = 0;
+//		  minute++;
+//	  }
+	  minute++;
+	  if(minute >= 60){
+		  minute = 0;
+		  hour++;
+	  }
+	  if(hour >= 24){
+		  hour = 0;
+	  }
+
+	  UpdateClockBuffer();
+	  HAL_Delay(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -259,6 +283,12 @@ void UpdateLed7Seg(uint8_t index){
 	}
 }
 
+void UpdateClockBuffer(){
+	ledBuffer[0] = hour / 10;
+	ledBuffer[1] = hour % 10;
+	ledBuffer[2] = minute / 10;
+	ledBuffer[3] = minute % 10;
+}
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if(htim->Instance == TIM2){
 		counterBlinking--;
