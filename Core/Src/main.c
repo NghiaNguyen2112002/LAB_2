@@ -60,8 +60,14 @@ void UpdateClockBuffer();
 
 const int MAX_LED_MATRIX = 8;
 int index_led_matrix = 0;
-uint8_t matrix_buffer[8] = {0x18, 0x3C, 0x66, 0x66, 0x7E, 0x7E, 0x66, 0x66};
+int index_shift_left = 0;
+
+uint16_t matrix_buffer[8] = {0x1800, 0x3C00, 0x6600, 0x6600, 0x7E00, 0x7E00, 0x6600, 0x6600};
+uint16_t newMatrixBuffer[8] = {0x1800, 0x3C00, 0x6600, 0x6600, 0x7E00, 0x7E00, 0x6600, 0x6600};
+
+void ShiftLeft();
 void updateLEDMatrix(int index);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -147,32 +153,35 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  UpdateClockBuffer();
+	//  UpdateClockBuffer();
+
+//	  if(timer0_flag == 1){
+//		  SetTimer0(1000);
+//		//  ShiftLeft();
+//		  minute++;
+////		  if(second >= 60){
+////			  second = 0;
+////			  minute++;
+////		  }
+//		  if(minute >= 60){
+//			  minute = 0;
+//			  hour++;
+//		  }
+//		  if(hour > 24){
+//			  hour = 0;
+//		  }
+//
+//		  HAL_GPIO_TogglePin(DOT_GPIO_Port, DOT_Pin);
+//	  }
 
 	  if(timer0_flag == 1){
 		  SetTimer0(1000);
-
-		  minute++;
-//		  if(second >= 60){
-//			  second = 0;
-//			  minute++;
-//		  }
-		  if(minute >= 60){
-			  minute = 0;
-			  hour++;
-		  }
-		  if(hour > 24){
-			  hour = 0;
-		  }
-
-		  HAL_GPIO_TogglePin(DOT_GPIO_Port, DOT_Pin);
+		  ShiftLeft();
 	  }
-
 	  if(timer1_flag == 1){
-		  SetTimer1(10);
+		  SetTimer1(100);
 //		  if(indexLed > 3) indexLed = 0;
 //		  UpdateLed7Seg(indexLed++);
-
 		  if(index_led_matrix > 8) index_led_matrix = 0;
 		  updateLEDMatrix(index_led_matrix++);
 	  }
@@ -356,7 +365,16 @@ void UpdateClockBuffer(){
 //const int MAX_LED_MATRIX = 8;
 //int index_led_matrix = 0;
 //uint8_t matrix_buffer[8] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
+void ShiftLeft(){
+//shift left
+	for(uint8_t i = 0; i < MAX_LED_MATRIX; i++){
+		newMatrixBuffer[i] = newMatrixBuffer[i] << 1;
+	}
+
+}
+
 void updateLEDMatrix(int index){
+    GPIOB->ODR = ~(newMatrixBuffer[index]);
     switch (index){
         case 0:
         	HAL_GPIO_WritePin(GPIOA, ENM0_Pin, RESET);
@@ -401,8 +419,6 @@ void updateLEDMatrix(int index){
         default:
             break;
     }
-     GPIOB->BSRR = ~(matrix_buffer[index] << 8);
-     GPIOB->BRR = (matrix_buffer[index] << 8);
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
